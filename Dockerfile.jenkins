@@ -1,0 +1,41 @@
+FROM nexus.petrobras.com.br:5000/dotnet/aspnet:6.0 AS runtime-web
+    ARG JENKINS_OUTPUT
+	
+	ENV \
+	# Arquivos de source do APT
+		sourceFiles="/etc/apt/sources.list" \
+	# Repositório APT debian buster
+		repoOficialDebBuster="deb http://deb.debian.org/debian buster main" \
+		repoInternoDebBuster="deb http://nexus.petrobras.com.br/nexus/repository/apt-debian-deb-buster buster main" \
+	# Repositório APT debian buster-updates
+		repoOficialDebBusterUpdates="deb http://deb.debian.org/debian buster-updates main" \
+		repoInternoDebBusterUpdates="deb http://nexus.petrobras.com.br/nexus/repository/apt-debian-deb-buster-updates buster-updates main" \
+	# Repositório APT debian-security buster/updates
+		repoOficialSecurityBusterUpdates="deb http://security.debian.org/debian-security buster/updates main" \
+		repoInternoSecurityBusterUpdates="deb http://nexus.petrobras.com.br/nexus/repository/apt-debian-security-buster-updates buster/updates main"
+
+    RUN sed -i "s|${repoOficialDebBuster}|${repoInternoDebBuster}|g" ${sourceFiles} \
+        && sed -i "s|${repoOficialDebBusterUpdates}|${repoInternoDebBusterUpdates}|g" ${sourceFiles} \
+        && sed -i "s|${repoOficialSecurityBusterUpdates}|${repoInternoSecurityBusterUpdates}|g" ${sourceFiles}
+
+	RUN apt-get update \
+		&& apt-get install -y \
+        gss-ntlmssp \
+		libgdiplus \
+		&& apt-get clean \
+		&& rm -rf /var/lib/apt/lists/* \
+		&& rm -rf /etc/apt/*
+	
+    WORKDIR /app
+
+    COPY ./SPSW.Web.Api/PetrobrasCARootCorporativa.crt /usr/local/share/ca-certificates/
+    RUN update-ca-certificates
+    COPY $JENKINS_OUTPUT .
+	RUN ls
+    COPY ./SPSW.Web.Client/build ./SPSW.Web.Client/build
+    COPY ./start.sh ./start.sh
+    RUN groupadd -g 2169304 gg_unix_primario
+    RUN useradd -m -g 2169304 -u 3244102 SASPSW
+    USER SASPSW
+    EXPOSE 8080
+    ENTRYPOINT ["./start.sh"]

@@ -1,0 +1,15 @@
+env:
+    AuthorizedGroups: GG_APPS_DEVOPS_ACESSODEV_DLHG_K8S
+    
+build:
+    dotnet:
+        Name: dlhg-k8s
+        SolutionName: EdiligWebAPI
+        CatalogId: dlhg
+        GroupId: br.com.petrobras.dlhg-k8s
+        ProjectName: EdiligWebAPI
+        Repository: dlhg
+        TestProjects: EdiligWebAPI.Tests
+
+upload:
+    dotnet:
